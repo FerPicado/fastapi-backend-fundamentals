@@ -46,7 +46,7 @@ def get_search_products(max_price: float):
     
     if not rows:
         raise HTTPException(
-            status_code=400,
+            status_code=404,
             detail="No products found"
         )
     
@@ -60,6 +60,21 @@ def get_search_products(max_price: float):
        }) 
        
     return products
+
+@router.get('/count')
+def get_products_count():
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT COUNT(*) FROM products')
+    row = cursor.fetchone()
+    conn.close()
+    
+    return {
+        "count": row[0]
+    }
+    
 
 @router.get('/{product_id}')
 def get_product_by_id(product_id: int ):
