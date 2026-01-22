@@ -9,13 +9,13 @@ Small backend project built with FastAPI and SQLite to practice REST APIs and da
 - Uvicorn
 
 ## Project Structure
-
+```text
 app-sqlite/
 ├── main.py
 ├── database.py
 └── routes/
     └── products.py
-
+```
 ## Available Endpoints
 
 ### Products
@@ -27,3 +27,4 @@ app-sqlite/
 ## How to run
 ```bash
 uvicorn main:app --reload
+```
