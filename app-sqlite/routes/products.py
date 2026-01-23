@@ -1,7 +1,10 @@
 # imports
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status  
 from database import get_connection
 
+# POST
+from pydantic import BaseModel, Field
+from typing import Annotated
 
 # main router
 router = APIRouter(
@@ -100,3 +103,58 @@ def get_product_by_id(product_id: int ):
         "name": row[1], 
         "price": row[2]
     }
+    
+# POST
+
+class ProductCreate(BaseModel):
+    name: Annotated[str, Field(min_length=1, pattern=r'^[a-zA-Z0-9\s]+$')]
+    price: int = Field(gt=0)
+    
+class ProductOut(BaseModel):
+    id: int
+    name: str 
+    price: float
+    
+"""
+ProductCreate -> Lo que el cliente envía
+ProductOut -> Lo que el servidor devuelve
+IMPORTANTE: Nunca se mezclan.
+"""
+
+@router.post('/', response_model=ProductOut, status_code=status.HTTP_201_CREATED)
+def create_product(product: ProductCreate):
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # Verificamos duplicados
+    cursor.execute('SELECT id FROM products WHERE name = ?', (product.name,))
+    if cursor.fetchone():
+        conn.close()
+        
+        raise HTTPException(
+            status_code=409,
+            detail='Product with this name already exists'
+        )
+        
+    #Insert
+    cursor.execute(
+        'INSERT INTO products (name, price) VALUES(?,?)',
+        (product.name, product.price)
+    )
+    
+    # confirmar transaccion:
+    conn.commit()
+    
+    # Obtener ID recien creado:
+    new_id = cursor.lastrowid
+    conn.close()
+    
+    # devolver lo creado:
+    
+    return ProductOut(
+        id = new_id,
+        name = product.name,
+        price = product.price
+    )
+
