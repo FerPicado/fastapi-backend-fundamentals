@@ -1,6 +1,7 @@
 # imports
 from fastapi import APIRouter, HTTPException, status  
 from database import get_connection
+from services.products_service import create_product, delete_product
 
 # POST
 from pydantic import BaseModel, Field
@@ -95,56 +96,20 @@ ProductOut -> Lo que el servidor devuelve
 IMPORTANTE: Nunca se mezclan.
 """
 
-@router.post('/', response_model=ProductOut, status_code=status.HTTP_201_CREATED)
-def create_product(product: ProductCreate):
+@router.post('/', response_model=ProductOut)
+def create_product_endpoint(product: ProductCreate):
     
-    try:
-        
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        # Verificamos duplicados
-        cursor.execute('SELECT id FROM products WHERE name = ?', (product.name,))
-        if cursor.fetchone():
-            conn.close()
-            
-            raise HTTPException(
-                status_code=409,
-                detail='Product with this name already exists'
-            )
-            
-        #Insert
-        cursor.execute(
-            'INSERT INTO products (name, price) VALUES(?,?)',
-            (product.name, product.priceC)
-        )
-        
-        # confirmar transaccion:
-        conn.commit()
-        
-        # Obtener ID recien creado:
-        new_id = cursor.lastrowid
-        conn.close()
-        
-        # devolver lo creado:
-        
-        return ProductOut(
-            id = new_id,
-            name = product.name,
-            price = product.price
-        )
-        
-    except HTTPException: # Si el error ya es HTTP (409, 400, etc),
-        #NO lo tocamos, NO lo convertimos
-        raise
+    new_id = create_product(
+        name= product.name,
+        price= product.price
+    )
     
-    except Exception as e:
-        print(f"Logs: {e} \n")
-        raise HTTPException(
-            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = 'Internal Server Error'
-        )
- 
+    return ProductOut(
+        id = new_id,
+           name = product.name,
+        price = product.price
+    )
+
 @router.get('/{product_id}')
 def get_product_by_id(product_id: int ):
     
@@ -171,46 +136,6 @@ def get_product_by_id(product_id: int ):
     }
 
 @router.delete('/{product_id}', status_code= status.HTTP_200_OK)
-def delete_product(product_id: int):
-    # validamos que sea un valor valido
-    if product_id <= 0:
-        raise HTTPException(
-            status_code= status.HTTP_400_BAD_REQUEST,
-            detail= 'Invalid product id'
-        )
-        
-    try:  
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute(
-            'SELECT id FROM products WHERE id = ?',
-            (product_id,)
-        )   
-        # si no existe 
-        if cursor.fetchone() is None:
-            raise HTTPException(
-                status_code= status.HTTP_404_NOT_FOUND,
-                detail= 'Product not found'
-            )   
-        # si existe:
-        cursor.execute(
-            'DELETE FROM products WHERE id = ?',
-            (product_id,)
-        )
-        conn.commit()
-        conn.close() 
-        return {"message": "Product deleted successfully"}
-    
-    # Si ya es una HTTPException (400, 404, 409, etc), la relanzamos sin modificarla
-    except HTTPException:
-        raise
-    
-    # Cualquier error inesperado (DB, bug, typo, etc)
-    # se loguea y se responde como 500
-    except Exception as e:
-        print(f"Logs: {e} \n")
-        raise HTTPException(
-            status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail= 'Internal server error'
-        )
+def delete_product_endpoint(product_id: int):
+    delete_product(product_id)    
+    return {"message": "Product deleted successfully"}
