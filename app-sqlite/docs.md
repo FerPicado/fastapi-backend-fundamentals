@@ -14,3 +14,18 @@ El backend no trabaja directo con JSON
 Vos transformás datos → JSON después
 
 Esto es clave mental.
+
+## El router NO piensa.
+## El router delega.
+
+```text
+El router:
+
+recibe parámetros
+
+llama a un service
+
+devuelve respuesta
+
+Nada más.
+```
