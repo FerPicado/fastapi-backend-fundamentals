@@ -41,7 +41,7 @@ def create_product(name: str, price: int) -> int:
     
     conn.commit()
     
-    new_id = cursor.lastrowid()
+    new_id = cursor.lastrowid
     conn.close()
     
     return new_id
@@ -55,10 +55,11 @@ def product_duplicate(name: str) -> bool:
         "SELECT 1 FROM products WHERE name = ?",
         (name,)
     )
-    
+        
+    result = cursor.fetchone() is not None
     conn.close()
     
-    return cursor.fetchone() is not None
+    return result
     
     
      
