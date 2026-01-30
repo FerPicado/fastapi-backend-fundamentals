@@ -83,7 +83,7 @@ def get_products_count():
 
 class ProductCreate(BaseModel):
     name: Annotated[str, Field(min_length=1, pattern=r'^[a-zA-Z0-9\s]+$')]
-    price: int = Field(gt=0)
+    price: float = Field(gt=0)
     
 class ProductOut(BaseModel):
     id: int

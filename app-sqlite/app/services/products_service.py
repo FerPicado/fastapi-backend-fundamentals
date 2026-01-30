@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from repositories import products_repository
+from app.repositories import products_repository
 
 def delete_product(product_id: int) -> None:
     
